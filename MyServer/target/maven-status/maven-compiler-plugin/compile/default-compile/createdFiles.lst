@@ -1,6 +1,8 @@
 com/example/myserver/SecurityConfig.class
+com/example/myserver/UserNotFoundException.class
 com/example/myserver/HelloController.class
 com/example/myserver/UserRepository.class
 com/example/myserver/MyServerApplication.class
 com/example/myserver/UserController.class
+com/example/myserver/GlobalExceptionHandler.class
 com/example/myserver/User.class

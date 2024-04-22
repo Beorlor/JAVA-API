@@ -18,18 +18,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private UserRepository userRepository;
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-            .csrf().disable()  // Disable CSRF protection for simplicity in testing and development
-            .authorizeRequests()
-                .antMatchers("/register").permitAll()  // Allow registration requests without authentication
-                .anyRequest().authenticated()  // Require authentication for all other requests
-            .and()
-                .formLogin().permitAll()  // Enable form-based login
-            .and()
-                .httpBasic();  // Enable HTTP Basic authentication
-    }
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http
+			.csrf().disable()  // Assuming CSRF is disabled for testing purposes
+			.authorizeRequests()
+				.antMatchers("/users/register").permitAll()  // Allow everyone to access the register endpoint
+				.anyRequest().authenticated()  // All other requests need authentication
+			.and()
+				.formLogin().permitAll()
+			.and()
+				.httpBasic();
+	}
+
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
