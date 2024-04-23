@@ -28,59 +28,70 @@ public class User {
     @Size(max = 200, message = "Profile description can be up to 200 characters")
     private String profileDescription;
 
+    @Column(name = "role")
+    private String role; // 'ADMIN' or 'USER'
+
     // Default constructor
     public User() {
     }
 
     // All arguments constructor for convenience
-    public User(Long id, String username, String password, String email, String profileDescription) {
+    public User(Long id, String username, String password, String email, String profileDescription, String role) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.email = email;
         this.profileDescription = profileDescription;
+        this.role = role;
     }
 
-    // Getters
+    // Getters and Setters
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getUsername() {
         return username;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getProfileDescription() {
-        return profileDescription;
-    }
-
-    // Setters
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public void setEmail(String email) {
         this.email = email;
     }
 
+    public String getProfileDescription() {
+        return profileDescription;
+    }
+
     public void setProfileDescription(String profileDescription) {
         this.profileDescription = profileDescription;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     @Override
@@ -91,6 +102,7 @@ public class User {
                 ", password='" + password + '\'' +
                 ", email='" + email + '\'' +
                 ", profileDescription='" + profileDescription + '\'' +
+                ", role='" + role + '\'' +
                 '}';
     }
 }

@@ -21,14 +21,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-            .csrf().disable()  // Disable CSRF for testing; consider enabling in production
-            .authorizeRequests()
+            .csrf(csrf -> csrf.disable())  // Disable CSRF; consider enabling in production
+            .authorizeRequests(auth -> auth
                 .antMatchers("/users/register").permitAll()  // Allow public access to the registration endpoint
-                .anyRequest().authenticated()  // Secure all other endpoints
-            .and()
-                .formLogin().permitAll()  // Enable form login for all users
-            .and()
-                .httpBasic();  // Enable HTTP Basic authentication
+                .antMatchers("/admin/**").hasAuthority("ADMIN")  // Only ADMIN can access admin paths
+                .anyRequest().authenticated())  // Secure all other endpoints
+            .formLogin(form -> form.permitAll())  // Enable form login for all users
+            .httpBasic();  // Enable HTTP Basic authentication
     }
 
     @Override
@@ -46,9 +45,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 throw new UsernameNotFoundException("User not found.");
             }
             return new org.springframework.security.core.userdetails.User(
-                    user.getUsername(),
-                    user.getPassword(),
-                    Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("USER")));
+                user.getUsername(),
+                user.getPassword(),
+                Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority(user.getRole())));
         };
     }
 
