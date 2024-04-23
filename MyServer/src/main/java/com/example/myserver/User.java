@@ -88,7 +88,7 @@ public class User {
         return "User{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
-                ", password='" + password + '\'' + // Consider omitting sensitive data like password in real-world use
+                ", password='" + password + '\'' +
                 ", email='" + email + '\'' +
                 ", profileDescription='" + profileDescription + '\'' +
                 '}';
