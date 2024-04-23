@@ -92,27 +92,27 @@ public class UserController {
     @PutMapping("/admin/{id}/grant-admin")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> grantAdmin(@PathVariable Long id) {
-        return changeUserRole(id, "ADMIN");
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        user.setRole("ADMIN");
+        userRepository.save(user);
+        return ResponseEntity.ok("Role updated to ADMIN for user: " + user.getUsername());
     }
 
     // Admin revokes admin role
     @PutMapping("/admin/{id}/revoke-admin")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> revokeAdmin(@PathVariable Long id) {
-        return changeUserRole(id, "USER");
-    }
-
-    // Helper method to change user role
-    private ResponseEntity<?> changeUserRole(Long id, String role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-        user.setRole(role);
+        user.setRole("USER");
         userRepository.save(user);
-        return ResponseEntity.ok("Role updated to " + role + " for user: " + user.getUsername());
+        return ResponseEntity.ok("Role updated to USER for user: " + user.getUsername());
     }
 
     // Delete a user
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable Long id, Principal principal) {
         User currentUser = userRepository.findByUsername(principal.getName());
         User user = userRepository.findById(id)
