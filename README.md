@@ -1,11 +1,12 @@
 # JAVA-API
 
-This API provides basic functionalities to manage user profiles in a Java-based system, allowing for both administrative and regular user interactions. It is designed to handle user registration, profile management, and role-based access controls.
+This API provides basic functionalities to manage user profiles in a Java-based system, allowing for both administrative and regular user interactions. It is designed to handle user registration, profile management, and role-based access controls, as well as file upload and download functionalities.
 
 ## User Roles and Permissions
 
-- **Admin Users**: Admins have the ability to modify any user's profile, delete any account, and manage user roles, including granting and revoking admin rights. This allows admins to perform broad management tasks across the entire user base.
-- **Regular Users**: Regular users are limited to viewing and modifying their own profiles. They cannot access or modify other users' information, nor can they manage roles. This ensures that users can maintain privacy and control over their own information without affecting others.
+- **Admin Users**: Admins have the ability to modify any user's profile, delete any account, and manage user roles, including granting and revoking admin rights. This allows admins to perform broad management tasks across the entire user base, as well as upload and download files.
+- **Regular Users**: Regular users are limited to viewing and modifying their own profiles. They cannot access or modify other users' information, nor can they manage roles. This ensures that users can maintain privacy and control over their own information without affecting others. Regular users can download files but cannot upload them.
+- **Non-Users**: Non-users are not allowed to perform any actions on the system.
 
 ## Getting Started
 
@@ -73,8 +74,27 @@ To delete a user, ensure you have appropriate permissions (admin for any user, i
 curl -X DELETE 'http://localhost:8080/users/USER_ID' \
 -u username:password
 ```
+### Upload a File
+
+To upload a file, only admins can perform this action:
+
+```bash
+curl -X POST 'http://localhost:8080/files/upload' \
+-u adminuser:securepassword \
+-F "file=@/path/to/file"
+```
+### Download a File
+
+To download a file, only authenticated users can perform this action:
+
+```bash
+curl -X GET 'http://localhost:8080/files/download/FILENAME' \
+-u username:password \
+-o downloaded_file.ext
+```
 ## Upcoming Features
 
+- **Acces Denied Message** Not all case and features have a propre acces denied msg (even if there is no msg, the acces denied is manage for all case).
 - **Database Integration:** Plan to integrate PostgreSQL for robust data management.
 - **Vault for Sensitive Data:** Implementing a vault for securely managing the admin secret.
 - **Persistent Login:** Incorporating JWT for persistent user authentication and session management.
