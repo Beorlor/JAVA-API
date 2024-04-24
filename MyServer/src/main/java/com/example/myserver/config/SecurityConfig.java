@@ -12,8 +12,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import java.util.Collections;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -24,28 +24,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-            .csrf().disable() // CSRF should typically be enabled, especially in production
+            .csrf().disable()
             .authorizeRequests()
                 .antMatchers("/users/register").permitAll()
-                .antMatchers("/files/upload/**").hasAuthority("ADMIN") // Only admins can upload files
-                .antMatchers("/files/download/**").authenticated() // Only authenticated users can download files
+                .antMatchers("/users/admin/**").hasAuthority("ADMIN")
+                .antMatchers("/files/upload/**").hasAuthority("ADMIN")
+                .antMatchers("/files/download/**").authenticated()
                 .anyRequest().authenticated()
-            .and()
-            .formLogin().permitAll()
             .and()
             .httpBasic()
             .and()
             .exceptionHandling().accessDeniedHandler((request, response, accessDeniedException) -> {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.getWriter().write("Access Denied: " + accessDeniedException.getMessage());
-            }); // Custom handler for access denied exceptions
+            });
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth
-            .userDetailsService(userDetailsServiceBean())
-            .passwordEncoder(passwordEncoder());
+        auth.userDetailsService(userDetailsServiceBean()).passwordEncoder(passwordEncoder());
     }
 
     @Bean

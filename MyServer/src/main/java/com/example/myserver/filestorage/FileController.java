@@ -14,33 +14,38 @@ import org.springframework.security.core.Authentication;
 @RequestMapping("/files")
 public class FileController {
 
-    @Autowired
-    private FileStorageService fileStorageService;
+	@Autowired
+	private FileStorageService fileStorageService;
 
-    // Only admins can upload files
-    @PostMapping("/upload")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
-        try {
-            fileStorageService.save(file);
-            return ResponseEntity.ok("File uploaded successfully!");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to upload file: " + e.getMessage());
-        }
-    }
+	// Only admins can upload files
+	@PostMapping("/upload")
+	@PreAuthorize("hasAuthority('ADMIN')")
+	public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
+		try {
+			fileStorageService.save(file);
+			return ResponseEntity.ok("File uploaded successfully!");
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body("Failed to upload file: " + e.getMessage());
+		}
+	}
 
-    // Admins and authenticated users can download files
-    @GetMapping("/download/{filename}")
-    public ResponseEntity<?> downloadFile(@PathVariable String filename, Authentication authentication) {
-        try {
-            Resource file = fileStorageService.loadAsResource(filename);
-            return ResponseEntity.ok()
-                                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                                 .body(file);
-        } catch (StorageFileNotFoundException ex) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-    }
+	// File download with security checks
+	@GetMapping("/download/{filename}")
+	public ResponseEntity<?> downloadFile(@PathVariable String filename, Authentication authentication) {
+		if (authentication == null || !authentication.isAuthenticated()) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied: Unauthorized access");
+		}
+		try {
+			Resource file = fileStorageService.loadAsResource(filename);
+			if (file.exists()) {
+				return ResponseEntity.ok()
+						.contentType(MediaType.APPLICATION_OCTET_STREAM)
+						.body(file);
+			} else {
+				return ResponseEntity.notFound().build();
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied: File cannot be accessed");
+		}
+	}
 }

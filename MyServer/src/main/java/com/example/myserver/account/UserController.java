@@ -1,7 +1,6 @@
 package com.example.myserver.account;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.util.Map;
+import java.util.Optional;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/users")
@@ -29,14 +30,12 @@ public class UserController {
             return ResponseEntity.badRequest().body("Username is already taken!");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        final String ADMIN_SECRET = "secret";  // Ensure this is securely managed
+        final String ADMIN_SECRET = "secret";  // This should be managed securely
         if (ADMIN_SECRET.equals(adminSecret)) {
             user.setRole("ADMIN");
         } else {
             user.setRole("USER");
         }
-
         User savedUser = userRepository.save(user);
         return ResponseEntity.ok("User registered successfully with ID: " + savedUser.getId() + " and Role: " + savedUser.getRole());
     }
@@ -44,56 +43,39 @@ public class UserController {
     // Fetch a user by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id, Principal principal) {
-        User currentUser = userRepository.findByUsername(principal.getName());
-        User targetUser = userRepository.findById(id)
-            .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-
-        if (!currentUser.getUsername().equals(targetUser.getUsername()) && !"ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return ResponseEntity.ok(targetUser);
+        return userRepository.findById(id).map(user -> {
+            if (!principal.getName().equals(user.getUsername()) && !"ADMIN".equals(user.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            return ResponseEntity.ok(user);
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found"));
     }
 
     // Update a user's details selectively
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody Map<String, Object> updates, Principal principal) {
-        User currentUser = userRepository.findByUsername(principal.getName());
-        User userToUpdate = userRepository.findById(id)
-            .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-
-        if (!currentUser.getUsername().equals(userToUpdate.getUsername()) && !"ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        // Apply updates selectively
-        updates.forEach((key, value) -> {
-            switch (key) {
-                case "username":
-                    userToUpdate.setUsername((String) value);
-                    break;
-                case "email":
-                    userToUpdate.setEmail((String) value);
-                    break;
-                case "profileDescription":
-                    userToUpdate.setProfileDescription((String) value);
-                    break;
-                case "password":
-                    userToUpdate.setPassword(passwordEncoder.encode((String) value));
-                    break;
+        return userRepository.findById(id).map(user -> {
+            if (!principal.getName().equals(user.getUsername()) && !"ADMIN".equals(user.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-        });
-
-        userRepository.save(userToUpdate);
-        return ResponseEntity.ok("User updated successfully");
+            updates.forEach((key, value) -> {
+                switch (key) {
+                    case "username": user.setUsername((String) value); break;
+                    case "email": user.setEmail((String) value); break;
+                    case "profileDescription": user.setProfileDescription((String) value); break;
+                    case "password": user.setPassword(passwordEncoder.encode((String) value)); break;
+                }
+            });
+            userRepository.save(user);
+            return ResponseEntity.ok("User updated successfully");
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found"));
     }
 
     // Admin grants admin role
     @PutMapping("/admin/{id}/grant-admin")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> grantAdmin(@PathVariable Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         user.setRole("ADMIN");
         userRepository.save(user);
         return ResponseEntity.ok("Role updated to ADMIN for user: " + user.getUsername());
@@ -103,8 +85,7 @@ public class UserController {
     @PutMapping("/admin/{id}/revoke-admin")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> revokeAdmin(@PathVariable Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         user.setRole("USER");
         userRepository.save(user);
         return ResponseEntity.ok("Role updated to USER for user: " + user.getUsername());
@@ -113,16 +94,8 @@ public class UserController {
     // Delete a user
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id, Principal principal) {
-        User currentUser = userRepository.findByUsername(principal.getName());
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-
-        if (!currentUser.getUsername().equals(user.getUsername()) && !"ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        userRepository.delete(user);
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        userRepository.deleteById(id);
         return ResponseEntity.ok("User deleted successfully");
     }
 }
